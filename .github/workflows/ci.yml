@@ -110,7 +110,16 @@ jobs:
             exit 0
           fi
 
-          echo "build_version=$(bash scripts/build-version.sh)" >> "$GITHUB_OUTPUT"
+          # Go 项目没有包版本可读, 版本号完全由 tag 表达, 因此仓库里必须
+          # 至少有一个版本 tag. 命令替换失败不会影响 echo 的退出码, 这里
+          # 显式校验, 避免把空版本号一路带到各平台的构建里.
+          build_version="$(bash scripts/build-version.sh)"
+          if [[ -z "$build_version" || "$build_version" == "v" ]]; then
+            echo "无法解析构建版本: 仓库里可能还没有任何版本 tag" >&2
+            exit 1
+          fi
+
+          echo "build_version=$build_version" >> "$GITHUB_OUTPUT"
 
   test:
     needs: version

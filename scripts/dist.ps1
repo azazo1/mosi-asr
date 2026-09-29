@@ -31,6 +31,11 @@ try {
         $version = "v$(& 'scripts/build-version.ps1' | Out-String).Trim()"
     }
 
+    # 空版本或只有 v 说明版本解析没成功, 这时打出来的包名会残缺, 直接失败.
+    if (-not $version -or $version -eq "v") {
+        throw "版本号为空: 请设置 PROJECT_BUILD_VERSION, 或确保仓库里已有版本 tag"
+    }
+
     # 产物名里的版本段去掉 v 前缀, 与 PROJECT-VERSION-PLATFORM-ARCH 的命名示例保持一致.
     $archiveVersion = $version
     if ($archiveVersion.StartsWith("v")) {

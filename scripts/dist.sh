@@ -35,6 +35,12 @@ if [[ -z "$version" ]]; then
   version="v$(bash scripts/build-version.sh)"
 fi
 
+# 空版本或只有 v 说明版本解析没成功, 这时打出来的包名会残缺, 直接失败.
+if [[ -z "$version" || "$version" == "v" ]]; then
+  echo "版本号为空: 请设置 PROJECT_BUILD_VERSION, 或确保仓库里已有版本 tag" >&2
+  exit 1
+fi
+
 # 产物名里的版本段去掉 v 前缀, 与 PROJECT-VERSION-PLATFORM-ARCH 的命名示例保持一致.
 archive_version="${version#v}"
 
