@@ -1,0 +1,14 @@
+# 统一使用 LF 行尾.
+#
+# Windows 上 Git 默认 core.autocrlf=true, 检出时会把文本文件转成 CRLF,
+# 于是 CI 里的 gofmt 会把所有 .go 文件判为未格式化. 这里显式声明, 不依赖
+# 各平台的本机配置. PowerShell 与 bash 都能直接执行 LF 行尾的脚本.
+* text=auto eol=lf
+
+# 二进制文件不做行尾转换.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.gz binary

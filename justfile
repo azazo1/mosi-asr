@@ -1,15 +1,37 @@
 # just 使用说明: just --list
 
-# 版本号, 会注入到二进制; 发版时改成对应 tag
-version := "dev"
-
 [private]
 default:
     @just --list
 
-# 编译到 bin/mosi-asr
+# 编译到 bin/mosi-asr, 版本号显示 dev-build
+#
+# 开发构建关掉 VCS 信息写入, 否则每次 commit 都会改变链接结果, 让增量构建缓存失效.
 build:
-    go build -ldflags "-X main.version={{version}}" -o bin/mosi-asr ./cmd/mosi-asr
+    go build -buildvcs=false -o bin/mosi-asr ./cmd/mosi-asr
+
+# 生成当前平台的发布产物, 版本号自动带上 commit 短 hash
+[macos]
+dist:
+    PROJECT_BUILD_VERSION="v$(bash scripts/build-version.sh)" bash scripts/dist.sh
+
+# 生成当前平台的发布产物, 版本号自动带上 commit 短 hash
+[linux]
+dist:
+    PROJECT_BUILD_VERSION="v$(bash scripts/build-version.sh)" bash scripts/dist.sh
+
+# 生成当前平台的发布产物, 版本号自动带上 commit 短 hash
+[windows]
+[script('powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File')]
+dist:
+    $ErrorActionPreference = 'Stop'
+    $env:PROJECT_BUILD_VERSION = "v$(& 'scripts/build-version.ps1' | Out-String).Trim()"
+    & 'scripts/dist.ps1'
+    if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+# 当前构建应当显示的版本号
+version:
+    @bash scripts/build-version.sh
 
 # 生成配置文件到 ~/.config/mosi-asr/config.toml
 init:
@@ -21,24 +43,35 @@ run *args:
 
 # 安装到 GOPATH/bin
 install:
-    go install -ldflags "-X main.version={{version}}" ./cmd/mosi-asr
+    go install ./cmd/mosi-asr
 
 # 运行全部测试
 test:
-    go test ./...
+    go test ./... -count=1
 
 # 查看当前生效的配置
 show:
     go run ./cmd/mosi-asr config show
 
-# 格式检查与静态检查
+# 格式检查与静态检查, 只报告不修改
 check:
-    gofmt -l .
+    #!/usr/bin/env bash
+    set -euo pipefail
+    unformatted="$(gofmt -l .)"
+    if [[ -n "$unformatted" ]]; then
+        echo "以下文件未格式化:"
+        echo "$unformatted"
+        exit 1
+    fi
     go vet ./...
 
 # 自动格式化
 fmt:
     gofmt -w .
+
+# 整理依赖
+tidy:
+    go mod tidy
 
 # 启动本地模拟服务 (默认 18080 端口), 不产生真实调用
 mock port="18080":

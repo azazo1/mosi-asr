@@ -3,12 +3,26 @@
 把音视频转成文字的日常命令行工具, 后端使用 [Moss API](https://platform.mosi.cn/docs/scenarios/transcribe-diarization)
 的语音识别接口. 支持多说话人分离, 流式输出, 异步长音频任务, 以及 txt / srt / json / md 多种结果格式.
 
+## 安装
+
+从 [Releases](https://github.com/azazo1/mosi-asr/releases) 下载对应平台的归档, 解压后放进 PATH:
+
+```shell
+tar -xzf mosi-asr-0.1.0-macos-aarch64.tar.gz
+install -m 755 mosi-asr /usr/local/bin/mosi-asr
+```
+
+也可以直接用 Go 安装:
+
+```shell
+go install github.com/azazo1/mosi-asr/cmd/mosi-asr@latest
+```
+
 ## 快速开始
 
 ```shell
 # 1. 生成配置文件, 位置固定在 ~/.config/mosi-asr/config.toml
-just init
-# 或者不用 just: go run ./cmd/mosi-asr config init
+mosi-asr config init
 
 # 2. 填入 API Key (二选一)
 #    写进配置文件: api_key = "你的 Key"
@@ -17,6 +31,8 @@ just init
 # 3. 转写
 mosi-asr 会议录音.m4a        # 结果写到 会议录音.txt
 ```
+
+源码目录里也可以用 `just init` / `just build` 完成同样的步骤.
 
 ## 常用用法
 
@@ -62,25 +78,33 @@ mosi-asr task task-123 --wait -f srt    # 查询异步任务并导出结果
 ## 开发
 
 ```shell
-just build      # 编译到 bin/mosi-asr
+just build      # 编译到 bin/mosi-asr, 版本号显示 dev-build
 just test       # 单元测试与命令行级测试
 just check      # gofmt 检查 + go vet
+just version    # 当前工作区对应的版本号
+just dist       # 生成当前平台的发布产物, 输出到 dist/
 just mock       # 启动本地模拟服务, 不产生真实调用
 ```
 
-离线调试: 把配置里的 `api.base_url` 指向 `http://127.0.0.1:18080`, 启动 `just mock` 后即可跑通全流程.
+离线调试: 把配置里的 `api.base_url` 指向 `http://127.0.0.1:18080`, 启动 `just mock` 后即可跑通全流程, `just smoke` 会把整个链路跑一遍.
+
+发布产物的版本号自动生成: 恰好停在版本 tag 上时显示该 tag, 非 tag commit 追加 7 位短 hash, 工作区有未提交改动时改用 `^` 分隔. 归档名里的版本段不带 `v` 前缀, 而二进制内显示带 `v`, 例如产物 `mosi-asr-1.2.3-linux-x86_64.tar.gz` 里的二进制报 `v1.2.3`.
 
 ## 目录结构
 
 ```
-cmd/mosi-asr/        入口
-internal/cli/        参数解析与各子命令
-internal/config/     配置加载, 校验与版本迁移
-internal/mossapi/    接口客户端: 同步, 流式 SSE, 异步任务
-internal/output/     结果整理与渲染
-internal/audio/      输入文件预检与展开
-internal/logger/     日志设施
-docs/api-notes.md    接口要点与本项目的对应实现
+cmd/mosi-asr/           入口
+internal/buildinfo/     构建期注入的版本号
+internal/cli/           参数解析与各子命令
+internal/config/        配置加载, 校验与版本迁移
+internal/mossapi/       接口客户端: 同步, 流式 SSE, 异步任务
+internal/output/        结果整理与渲染
+internal/audio/         输入文件预检与展开
+internal/logger/        日志设施
+scripts/mock-server.py  离线模拟服务
+scripts/dist.sh         当前平台的发布产物
+docs/api-notes.md       接口要点与本项目的对应实现
+docs/changelog/         各版本的人工发布说明
 ```
 
 ## 说明
