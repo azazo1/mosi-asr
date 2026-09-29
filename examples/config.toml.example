@@ -1,0 +1,58 @@
+# mosi-asr 配置文件
+# 文档: https://platform.mosi.cn/docs/scenarios/transcribe-diarization
+#
+# 命令行参数优先级高于本文件; 密钥也可以只放进环境变量, 避免明文落盘.
+# version 由程序维护, 升级时旧配置会自动迁移, 一般不需要手改.
+
+version = 1
+
+[api]
+# 服务地址, 一般不需要修改.
+base_url = "https://api.mosi.cn"
+# 直接写在这里的 API Key; 留空则改用下面的环境变量.
+api_key = "在这里填写你的 API Key, 也可以留空改用环境变量"
+# 读取 API Key 的环境变量名.
+api_key_env = "MOSS_API_KEY"
+# 单次 HTTP 请求超时, 单位秒. 同步转写长音频时需要放宽.
+timeout_seconds = 600
+# 遇到网络错误, 429 或 5xx 时的重试次数.
+max_retries = 2
+
+[transcribe]
+# 普通转写使用的模型.
+model = "moss-transcribe-1.0"
+# 多说话人转写使用的模型, 也支持热词与流式输出.
+diarize_model = "moss-transcribe-diarize-pro"
+# 默认是否启用说话人识别; 也可以用 -d 按次开启.
+diarize = false
+# 默认是否流式输出; 流式要求多说话人模型, 且不能与 async 同用.
+stream = false
+# 默认是否走异步任务.
+async = false
+# 超过该大小的音频自动改用异步任务, 单位 MB; 设为 0 表示不自动切换.
+auto_async_over_mb = 32
+# 异步任务轮询间隔与最长等待时间, 单位秒.
+poll_interval_seconds = 3
+poll_timeout_seconds = 3600
+# 热词, 最多 20 个, 每个不超过 30 个字符; 仅多说话人模型支持.
+keyterms = []
+# 说话人相同的相邻分段间隔小于该秒数时合并成一段.
+merge_gap_seconds = 1.2
+# 是否在文本结果中保留时间戳.
+include_timestamps = false
+# 说话人文本是否带 "S01: " 前缀.
+speaker_name_prefix = true
+
+[output]
+# 默认输出格式: json, md, srt, text, txt
+format = "txt"
+# 结果输出目录, 留空表示与音频文件放在同一目录; 支持 ~ 展开.
+dir = ""
+# 结果文件已存在时是否覆盖, false 则自动追加序号.
+overwrite = true
+
+[log]
+# 日志级别: debug, info, warn, error. 日志始终写到 stderr.
+level = "info"
+# 额外写入的日志文件, 留空表示不落盘.
+file = ""
